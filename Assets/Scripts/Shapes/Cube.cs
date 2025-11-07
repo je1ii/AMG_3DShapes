@@ -1,21 +1,20 @@
-using JetBrains.Annotations;
 using UnityEngine;
 
-public class LineGen : MonoBehaviour
+public class Cube : MonoBehaviour
 {
-    public Material material;
-    public float cubeSize;
-    public Vector2 cubePos;
-    public float zPos;
-
-    private void OnPostRender()
+    private Material mat;
+    private float size;
+    private Vector2 pos;
+    private float zpos;
+    
+    public void DrawCube(Material material, float shapeSize, Vector2 shapePos, float zPos)
     {
-        DrawLine();
-    }
-
-    public void DrawLine()
-    {
-        if (material == null)
+        mat = material;
+        size = shapeSize;
+        pos = shapePos;
+        zpos = zPos;
+        
+        if (mat == null)
         {
             Debug.LogError("You need to add a material");
             return;
@@ -23,12 +22,12 @@ public class LineGen : MonoBehaviour
         GL.PushMatrix();
 
         GL.Begin(GL.LINES);
-        material.SetPass(0);
+        mat.SetPass(0);
 
         var frontSquare = GetCube();
-        var frontZ = PerspectiveCamera.Instance.GetPerspective(zPos + cubeSize * .5f);
+        var frontZ = PerspectiveCamera.Instance.GetPerspective(zpos + size * .5f);
         var backSquare = GetCube();
-        var backZ = PerspectiveCamera.Instance.GetPerspective(zPos - cubeSize * .5f);
+        var backZ = PerspectiveCamera.Instance.GetPerspective(zpos - size * .5f);
 
         var computedFront = RenderSquare(frontSquare, frontZ);
         var computedBack = RenderSquare(backSquare, backZ);
@@ -43,7 +42,7 @@ public class LineGen : MonoBehaviour
         GL.PopMatrix();
     }
 
-    public Vector2[] GetCube()
+    private Vector2[] GetCube()
     {
         var faceArray = new Vector2[]
         {
@@ -55,7 +54,7 @@ public class LineGen : MonoBehaviour
 
         for(var i = 0; i < faceArray.Length; i++)
         {
-            faceArray[i] = new Vector2(cubePos.x + faceArray[i].x, cubePos.y + faceArray[i].y) * cubeSize;
+            faceArray[i] = new Vector2(pos.x + faceArray[i].x, pos.y + faceArray[i].y) * size;
         }
 
         return faceArray;
@@ -73,5 +72,4 @@ public class LineGen : MonoBehaviour
         }
         return computedSquare;
     }
-
 }
