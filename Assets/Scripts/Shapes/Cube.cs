@@ -16,7 +16,7 @@ public class Cube : MonoBehaviour
         
         if (mat == null)
         {
-            Debug.LogError("You need to add a material");
+            Debug.LogError("Missing material");
             return;
         }
         GL.PushMatrix();

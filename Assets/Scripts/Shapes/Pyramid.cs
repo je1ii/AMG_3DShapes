@@ -16,7 +16,7 @@ public class Pyramid : MonoBehaviour
         
         if (mat == null)
         {
-            Debug.LogError("You need to add a material");
+            Debug.LogError("Missing material");
             return;
         }
         GL.PushMatrix();
@@ -24,7 +24,7 @@ public class Pyramid : MonoBehaviour
         GL.Begin(GL.LINES);
         mat.SetPass(0);
 
-        var front = new Vector2(0, 2f);
+        var front = new Vector2(0, 3f);
         var back = GetPyramid();
         var backZ = PerspectiveCamera.Instance.GetPerspective(zpos - size * .5f);
 
@@ -45,8 +45,8 @@ public class Pyramid : MonoBehaviour
     {
         var faceArray = new Vector2[]
         {
-            new Vector2 (1, 1f),
-            new Vector2 (-1f, 1f),
+            new Vector2 (0.8f, 0f),
+            new Vector2 (-0.8f, 0f),
             new Vector2 (-1f, -1f),
             new Vector2 (1f, -1f),
         };

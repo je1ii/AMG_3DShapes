@@ -25,6 +25,7 @@ public class LineGen : MonoBehaviour
     public Pyramid pyramid;
     public RectangularColumn rectangularColumn;
     public Sphere sphere;
+    public Cylinder cylinder;
 
     private void OnPostRender()
     {
@@ -55,6 +56,10 @@ public class LineGen : MonoBehaviour
                     Debug.Log("Reference Missing");
                 break;
             case ShapeType.Cylinder:
+                if (cylinder != null)
+                    cylinder.DrawCylinder(material, zPos, shapeSize - 1, shapeSize + 3);
+                else
+                    Debug.Log("Reference Missing");
                 break;
         }
     }
