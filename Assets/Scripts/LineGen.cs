@@ -13,11 +13,10 @@ public enum ShapeType
 
 public class LineGen : MonoBehaviour
 {
-    
     public Material material;
     public float shapeSize;
-    public Vector2 shapePos;
     public float zPos;
+    public Vector2 shapePos;
     public Vector3 shapeRotation = new Vector3(0, 0, 0);
     
     public ShapeType selectedShape;

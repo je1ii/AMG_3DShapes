@@ -37,7 +37,7 @@ public class RectangularColumn : MonoBehaviour
         var yRad = rotation.y * Mathf.Deg2Rad;
         var zRad = rotation.z * Mathf.Deg2Rad;
 
-        // 1. define the 8 vertices of the column in 3D space, relative to its center (0, 0, 0)
+        // define the 8 vertices of the column in 3D space, relative to its center (0, 0, 0)
         Vector3[] vertices = new Vector3[]
         {
             // front face 
