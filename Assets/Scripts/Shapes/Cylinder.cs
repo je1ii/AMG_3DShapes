@@ -2,80 +2,144 @@ using UnityEngine;
 
 public class Cylinder : MonoBehaviour
 {
-    public void DrawCylinder(Material material, float zPos, float radius, float height, int segments = 32)
+    private Material mat;
+    private float radius;
+    private float height;
+    private Vector2 pos;
+    private float zpos;
+    private Vector3 rotation;
+
+    public void DrawCylinder(Material material, float zPos, float shapeRadius, float shapeHeight, Vector2 shapePos, Vector3 shapeRot, int segments = 32)
     {
-        if (material == null)
+        mat = material;
+        radius = shapeRadius;
+        height = shapeHeight;
+        pos = shapePos;
+        rotation = shapeRot;
+        zpos = zPos;
+
+        if (mat == null)
         {
             Debug.LogError("Missing material");
             return;
         }
-        
-        
-        material.SetPass(0);
+
+        GL.PushMatrix();
+        mat.SetPass(0);
         GL.Begin(GL.LINES);
 
         var halfHeight = height / 2f;
+        var center = new Vector3(pos.x, pos.y, zpos);
 
-        // Draw top and bottom circles
-        DrawCircle(Vector3.up * halfHeight, segments, radius, zPos);
-        DrawCircle(Vector3.down * halfHeight, segments, radius, zPos);
+        // pre-calculate rotation radians
+        var xRad = rotation.x * Mathf.Deg2Rad;
+        var yRad = rotation.y * Mathf.Deg2Rad;
+        var zRad = rotation.z * Mathf.Deg2Rad;
 
-        // Connect edges between top and bottom
+        // draw top and bottom circles
+        DrawCircle(center, halfHeight, segments, xRad, yRad, zRad);
+
+        // connect edges between top and bottom
         for (var i = 0; i < segments; i++)
         {
-            var angle1 = (i / (float)segments) * Mathf.PI * 2f;
+            var angle = (i / (float)segments) * Mathf.PI * 2f;
 
-            // Calculate the base 3D coordinates (centered at X=0, Y=0, Z=0)
-            Vector3 bottom = new Vector3(Mathf.Cos(angle1) * radius, -halfHeight, Mathf.Sin(angle1) * radius);
-            Vector3 top = new Vector3(Mathf.Cos(angle1) * radius, halfHeight, Mathf.Sin(angle1) * radius);
+            // calculate the initial 3D points relative to the center (0, 0, 0)
+            Vector3 bottomP = new Vector3(Mathf.Cos(angle) * radius, -halfHeight, Mathf.Sin(angle) * radius);
+            Vector3 topP = new Vector3(Mathf.Cos(angle) * radius, halfHeight, Mathf.Sin(angle) * radius);
 
-            // Apply Z-Positioning (zPos) and get the scaling factor
-            // The point's Z value (bottom.z) is added to the base depth (zPos).
-            var zForPerspective = zPos + bottom.z;
-            var scale = PerspectiveCamera.Instance.GetPerspective(zForPerspective);
+            // apply rotation (relative to center)
+            bottomP = RotatePoint(bottomP, xRad, yRad, zRad);
+            topP = RotatePoint(topP, xRad, yRad, zRad);
 
-            // Apply scaling to X and Y coordinates (Projection)
-            bottom.x *= scale;
-            bottom.y *= scale;
-            
-            top.x *= scale;
-            top.y *= scale;
+            // apply translation (move to world position)
+            bottomP += center;
+            topP += center;
 
-            GL.Vertex(bottom);
-            GL.Vertex(top);
+            // apply perspective projection
+            var scaleBottom = PerspectiveCamera.Instance.GetPerspective(bottomP.z);
+            var scaleTop = PerspectiveCamera.Instance.GetPerspective(topP.z);
+
+            // apply scaling to x and y coordinates (projection)
+            bottomP.x *= scaleBottom;
+            bottomP.y *= scaleBottom;
+
+            topP.x *= scaleTop;
+            topP.y *= scaleTop;
+
+            // draw the vertical line segment
+            GL.Vertex(bottomP);
+            GL.Vertex(topP);
         }
 
         GL.End();
+        GL.PopMatrix();
     }
 
-    void DrawCircle(Vector3 centerOffset, int segments, float radius, float zPos)
-    {   
+    private void DrawCircle(Vector3 center, float halfHeight, int segments, float xRad, float yRad, float zRad)
+    {
         for (var i = 0; i < segments; i++)
         {
             var angle1 = (i / (float)segments) * Mathf.PI * 2f;
             var angle2 = ((i + 1) / (float)segments) * Mathf.PI * 2f;
 
-            var p1 = new Vector3(Mathf.Cos(angle1) * radius, centerOffset.y, Mathf.Sin(angle1) * radius);
-            var p2 = new Vector3(Mathf.Cos(angle2) * radius, centerOffset.y, Mathf.Sin(angle2) * radius);
-
-            // Point p1
-            var zForPerspective1 = zPos + p1.z;
-            var scale1 = PerspectiveCamera.Instance.GetPerspective(zForPerspective1);
+            var p1_base = new Vector3(Mathf.Cos(angle1) * radius, halfHeight, Mathf.Sin(angle1) * radius);
+            var p2_base = new Vector3(Mathf.Cos(angle2) * radius, halfHeight, Mathf.Sin(angle2) * radius);
             
-            // Apply scaling to X and Y
-            p1.x *= scale1;
-            p1.y *= scale1;
-
-            // Point p2
-            var zForPerspective2 = zPos + p2.z;
-            var scale2 = PerspectiveCamera.Instance.GetPerspective(zForPerspective2);
+            var p3_base = new Vector3(Mathf.Cos(angle1) * radius, -halfHeight, Mathf.Sin(angle1) * radius);
+            var p4_base = new Vector3(Mathf.Cos(angle2) * radius, -halfHeight, Mathf.Sin(angle2) * radius);
             
-            // Apply scaling to X and Y
-            p2.x *= scale2;
-            p2.y *= scale2;
-
-            GL.Vertex(p1);
-            GL.Vertex(p2);
+            // top face
+            DrawProjectedLine(p1_base, p2_base, center, xRad, yRad, zRad);
+            
+            // bot face
+            DrawProjectedLine(p3_base, p4_base, center, xRad, yRad, zRad);
         }
+    }
+
+    private void DrawProjectedLine(Vector3 p1_base, Vector3 p2_base, Vector3 center, float xRad, float yRad, float zRad)
+    {
+        // rotate
+        var p1 = RotatePoint(p1_base, xRad, yRad, zRad);
+        var p2 = RotatePoint(p2_base, xRad, yRad, zRad);
+
+        // translate
+        p1 += center;
+        p2 += center;
+
+        // project (Get scale and apply to x/y)
+        var scale1 = PerspectiveCamera.Instance.GetPerspective(p1.z);
+        var scale2 = PerspectiveCamera.Instance.GetPerspective(p2.z);
+
+        p1.x *= scale1;
+        p1.y *= scale1;
+
+        p2.x *= scale2;
+        p2.y *= scale2;
+        
+        // draw
+        GL.Vertex(p1);
+        GL.Vertex(p2);
+    }
+    
+    private Vector3 RotatePoint(Vector3 p, float xRad, float yRad, float zRad)
+    {
+        // z rotation
+        var x = p.x * Mathf.Cos(zRad) - p.y * Mathf.Sin(zRad);
+        var y = p.y * Mathf.Cos(zRad) + p.x * Mathf.Sin(zRad);
+        var z = p.z;
+        p = new Vector3(x, y, z);
+
+        // x rotation
+        y = p.y * Mathf.Cos(xRad) - p.z * Mathf.Sin(xRad);
+        z = p.y * Mathf.Sin(xRad) + p.z * Mathf.Cos(xRad);
+        p = new Vector3(p.x, y, z);
+
+        // y rotation
+        x = p.x * Mathf.Cos(yRad) + p.z * Mathf.Sin(yRad);
+        z = -p.x * Mathf.Sin(yRad) + p.z * Mathf.Cos(yRad);
+        p = new Vector3(x, p.y, z);
+
+        return p;
     }
 }
