@@ -261,10 +261,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: bf1bd287f3cadf94a9b8a49b5bd8b100, type: 2}
-  shapeSize: 5
+  shapeSize: 10
   shapePos: {x: 0, y: 0}
-  zPos: 5
-  selectedShape: 1
+  zPos: 10
+  shapeRotation: {x: 0, y: 0, z: 0}
+  selectedShape: 0
   cube: {fileID: 982951949}
   pyramid: {fileID: 1347647143}
   rectangularColumn: {fileID: 1957323394}
